@@ -69,8 +69,8 @@ public class RegisterServerController {
             serviceInstance.renew();
 
             //记录下每分钟的心跳的次数
-            HeartbeatMessuredRate heartbeatMessuredRate = HeartbeatMessuredRate.getInstance();
-            heartbeatMessuredRate.increment();
+            HeartbeatCounter heartbeatCounter = HeartbeatCounter.getInstance();
+            heartbeatCounter.increment();
 
             heartbeatResponse.setStatus(HeartbeatResponse.SUCCESS);
 

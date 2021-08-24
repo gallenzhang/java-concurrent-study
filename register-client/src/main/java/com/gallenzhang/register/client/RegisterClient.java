@@ -42,14 +42,14 @@ public class RegisterClient {
     /**
      * 客户端缓存的注册表
      */
-    private ClientCachedServiceRegistry registry;
+    private CachedServiceRegistry registry;
 
     public RegisterClient() {
         this.serviceInstanceId = UUID.randomUUID().toString().replace("-", "");
         this.httpSender = new HttpSender();
         this.heartbeatWorker = new HeartbeatWorker();
         this.isRunning = true;
-        this.registry = new ClientCachedServiceRegistry(this, httpSender);
+        this.registry = new CachedServiceRegistry(this, httpSender);
     }
 
     /**
