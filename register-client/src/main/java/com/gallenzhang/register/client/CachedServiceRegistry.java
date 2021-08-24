@@ -1,6 +1,7 @@
 package com.gallenzhang.register.client;
 
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 
 /**
@@ -76,6 +77,7 @@ public class CachedServiceRegistry {
 
         @Override
         public void run() {
+            //拉取全量注册表
             registry = httpSender.fetchServiceRegistry();
         }
     }
@@ -89,10 +91,52 @@ public class CachedServiceRegistry {
         public void run() {
             while (registerClient.isRunning()) {
                 try {
-                    //registry = httpSender.fetchDeltaServiceRegistry();
                     Thread.sleep(SERVICE_REGISTRY_FETCH_INTERVAL);
+
+                    //拉取回来的是最近3分钟变化的服务实例
+                    LinkedList<RecentlyChangedServiceInstance> deltaServiceRegistry = httpSender.fetchDeltaServiceRegistry();
+
+                    //一类是注册，一类是删除。
+                    //如果是注册的话，就判断一下这个服务实例是否在这个本地缓存的注册表中。如果不在的话，就放到本地缓存注册表中去
+                    //如果是删除的话，判断一下服务实例存在,就给删除掉
+
+                    //这里会大量的修改本地缓存的注册表，所以这里需要加锁
+                    synchronized (registry) {
+                        mergeDeltaRegistry(deltaServiceRegistry);
+                    }
+
                 } catch (Exception e) {
                     e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    /**
+     * 合并增量注册表到本地缓存注册表里去
+     *
+     * @param deltaServiceRegistry
+     */
+    private void mergeDeltaRegistry(LinkedList<RecentlyChangedServiceInstance> deltaServiceRegistry) {
+        for (RecentlyChangedServiceInstance recentlyChangedItem : deltaServiceRegistry) {
+            //如果是注册操作的话
+            if (ServiceInstanceOperation.REGISTER.equals(recentlyChangedItem.serviceInstanceOperation)) {
+                Map<String, ServiceInstance> serviceInstanceMap = registry.get(recentlyChangedItem.serviceInstance.getServiceName());
+                if (serviceInstanceMap == null) {
+                    serviceInstanceMap = new HashMap<String, ServiceInstance>();
+                    registry.put(recentlyChangedItem.serviceInstance.getServiceName(), serviceInstanceMap);
+                }
+
+                ServiceInstance serviceInstance = serviceInstanceMap.get(recentlyChangedItem.serviceInstance.getServiceInstanceId());
+                if (serviceInstance == null) {
+                    serviceInstanceMap.put(recentlyChangedItem.serviceInstance.getServiceInstanceId(), recentlyChangedItem.serviceInstance);
+                }
+
+            } else if (ServiceInstanceOperation.REMOVE.equals(recentlyChangedItem.serviceInstanceOperation)) {
+                //如果是删除操作
+                Map<String, ServiceInstance> serviceInstanceMap = registry.get(recentlyChangedItem.serviceInstance.getServiceName());
+                if (serviceInstanceMap != null) {
+                    serviceInstanceMap.remove(recentlyChangedItem.serviceInstance.getServiceInstanceId());
                 }
             }
         }
@@ -131,5 +175,20 @@ public class CachedServiceRegistry {
             this.changedTimestamp = changedTimestamp;
             this.serviceInstanceOperation = serviceInstanceOperation;
         }
+    }
+
+    /**
+     * 服务实例操作
+     */
+    class ServiceInstanceOperation {
+        /**
+         * 注册
+         */
+        public static final String REGISTER = "register";
+
+        /**
+         * 删除
+         */
+        public static final String REMOVE = "remove";
     }
 }
