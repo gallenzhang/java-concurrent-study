@@ -1,6 +1,5 @@
 package com.gallenzhang.register.server;
 
-import java.util.LinkedList;
 import java.util.Map;
 
 /**
@@ -94,12 +93,12 @@ public class RegisterServerController {
     }
 
     /**
-     * 拉取全量服务注册表
+     * 拉取增量服务注册表
      *
      * @return
      */
-    public LinkedList<ServiceRegistry.RecentlyChangedServiceInstance> fetchDeltaServiceRegistry() {
-        return registry.getRecentlyChangedQueue();
+    public DeltaRegistry fetchDeltaServiceRegistry() {
+        return registry.getDeltaRegistry();
     }
 
     /**

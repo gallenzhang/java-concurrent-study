@@ -51,7 +51,7 @@ public class HttpSender {
      *
      * @return
      */
-    public Map<String, Map<String, ServiceInstance>> fetchServiceRegistry() {
+    public Map<String, Map<String, ServiceInstance>> fetchFullRegistry() {
         Map<String, Map<String, ServiceInstance>> registry = new HashMap<String, Map<String, ServiceInstance>>();
 
         ServiceInstance serviceInstance = new ServiceInstance();
@@ -76,7 +76,7 @@ public class HttpSender {
      *
      * @return
      */
-    public LinkedList<CachedServiceRegistry.RecentlyChangedServiceInstance> fetchDeltaServiceRegistry() {
+    public DeltaRegistry fetchDeltaRegistry() {
         LinkedList<CachedServiceRegistry.RecentlyChangedServiceInstance> recentlyChangedQueue =
                 new LinkedList<CachedServiceRegistry.RecentlyChangedServiceInstance>();
 
@@ -93,7 +93,9 @@ public class HttpSender {
 
         System.out.println("拉取增量注册表：" + recentlyChangedQueue);
 
-        return recentlyChangedQueue;
+        DeltaRegistry deltaRegistry = new DeltaRegistry(recentlyChangedQueue, 2L);
+
+        return deltaRegistry;
     }
 
     /**

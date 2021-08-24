@@ -97,9 +97,17 @@ public class ServiceRegistry {
      *
      * @return
      */
-    public synchronized LinkedList<RecentlyChangedServiceInstance> getRecentlyChangedQueue() {
-        return recentlyChangedQueue;
+    public synchronized DeltaRegistry getDeltaRegistry() {
+        Long totalCount = 0L;
+        for (Map<String, ServiceInstance> serviceInstanceMap : registry.values()) {
+            totalCount += serviceInstanceMap.size();
+        }
+
+        DeltaRegistry deltaRegistry = new DeltaRegistry(recentlyChangedQueue, totalCount);
+
+        return deltaRegistry;
     }
+
 
     /**
      * 从注册表删除一个服务实例
