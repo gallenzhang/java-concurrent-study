@@ -1,6 +1,7 @@
 package com.gallenzhang.register.client;
 
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 
 /**
@@ -46,7 +47,7 @@ public class HttpSender {
     }
 
     /**
-     * 拉取服务注册表
+     * 全量拉取服务注册表
      *
      * @return
      */
@@ -65,9 +66,34 @@ public class HttpSender {
 
         registry.put("FINANCE-SERVICE", serviceInstanceMap);
 
-        System.out.println("拉取注册表：" + registry);
+        System.out.println("拉取全量注册表：" + registry);
 
         return registry;
+    }
+
+    /**
+     * 增量拉取服务注册表
+     *
+     * @return
+     */
+    public LinkedList<CachedServiceRegistry.RecentlyChangedServiceInstance> fetchDeltaServiceRegistry() {
+        LinkedList<CachedServiceRegistry.RecentlyChangedServiceInstance> recentlyChangedQueue =
+                new LinkedList<CachedServiceRegistry.RecentlyChangedServiceInstance>();
+
+        ServiceInstance serviceInstance = new ServiceInstance();
+        serviceInstance.setHostName("order-service-01");
+        serviceInstance.setIp("192.168.1.102");
+        serviceInstance.setPort(9000);
+        serviceInstance.setServiceInstanceId("ORDER-SERVICE-192.169.1.102:9000");
+        serviceInstance.setServiceName("ORDER-SERVICE");
+
+        CachedServiceRegistry.RecentlyChangedServiceInstance changedServiceInstance = new CachedServiceRegistry.RecentlyChangedServiceInstance(
+                serviceInstance, System.currentTimeMillis(), "register");
+        recentlyChangedQueue.add(changedServiceInstance);
+
+        System.out.println("拉取增量注册表：" + recentlyChangedQueue);
+
+        return recentlyChangedQueue;
     }
 
     /**

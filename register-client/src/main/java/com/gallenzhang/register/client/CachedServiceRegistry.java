@@ -24,9 +24,9 @@ public class CachedServiceRegistry {
 
 
     /**
-     * 负责定时拉取注册表到客户端进行缓存的后台线程
+     * 负责定时拉取增量注册表到客户端进行缓存的后台线程
      */
-    private Daemon daemon;
+    private FetchDeltaRegistryWorker fetchDeltaRegistryWorker;
 
     /**
      * registerClient
@@ -38,8 +38,14 @@ public class CachedServiceRegistry {
      */
     private HttpSender httpSender;
 
+    /**
+     * 构造函数
+     *
+     * @param registerClient
+     * @param httpSender
+     */
     public CachedServiceRegistry(RegisterClient registerClient, HttpSender httpSender) {
-        this.daemon = new Daemon();
+        this.fetchDeltaRegistryWorker = new FetchDeltaRegistryWorker();
         this.registerClient = registerClient;
         this.httpSender = httpSender;
     }
@@ -48,26 +54,42 @@ public class CachedServiceRegistry {
      * 初始化
      */
     public void initialize() {
-        this.daemon.start();
+        //启动全量拉取注册表的线程
+        FetchFullRegistryWorker fetchFullRegistryWorker = new FetchFullRegistryWorker();
+        fetchFullRegistryWorker.start();
+
+        //启动增量拉取注册表的线程
+        this.fetchDeltaRegistryWorker.start();
     }
 
     /**
      * 销毁这个组件
      */
     public void destroy() {
-        this.daemon.interrupt();
+        this.fetchDeltaRegistryWorker.interrupt();
     }
 
     /**
-     * 负责定时拉取注册表到本地来进行缓存
+     * 全量拉取注册表的后台线程
      */
-    private class Daemon extends Thread {
+    private class FetchFullRegistryWorker extends Thread {
+
+        @Override
+        public void run() {
+            registry = httpSender.fetchServiceRegistry();
+        }
+    }
+
+    /**
+     * 增量拉取注册表的后台线程
+     */
+    private class FetchDeltaRegistryWorker extends Thread {
 
         @Override
         public void run() {
             while (registerClient.isRunning()) {
                 try {
-                    registry = httpSender.fetchServiceRegistry();
+                    //registry = httpSender.fetchDeltaServiceRegistry();
                     Thread.sleep(SERVICE_REGISTRY_FETCH_INTERVAL);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -83,5 +105,31 @@ public class CachedServiceRegistry {
      */
     public Map<String, Map<String, ServiceInstance>> getRegistry() {
         return registry;
+    }
+
+    /**
+     * 最近变化的服务实例
+     */
+    static class RecentlyChangedServiceInstance {
+        /**
+         * 服务实例
+         */
+        ServiceInstance serviceInstance;
+
+        /**
+         * 发生变更的时间戳
+         */
+        Long changedTimestamp;
+
+        /**
+         * 变更操作
+         */
+        String serviceInstanceOperation;
+
+        public RecentlyChangedServiceInstance(ServiceInstance serviceInstance, Long changedTimestamp, String serviceInstanceOperation) {
+            this.serviceInstance = serviceInstance;
+            this.changedTimestamp = changedTimestamp;
+            this.serviceInstanceOperation = serviceInstanceOperation;
+        }
     }
 }
