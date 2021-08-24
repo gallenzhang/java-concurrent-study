@@ -1,6 +1,5 @@
 package com.gallenzhang.register.client;
 
-import java.rmi.dgc.Lease;
 
 /**
  * @description: 代表了一个服务实例，里面包含了一个服务实例的所有信息(服务名称、ip地址、hostname、端口号、服务实例id)

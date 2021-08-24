@@ -1,6 +1,5 @@
 package com.gallenzhang.register.server;
 
-import java.util.Map;
 
 /**
  * @description: 这个controller是负责接收register-client发送过来的请求的
@@ -88,8 +87,8 @@ public class RegisterServerController {
      *
      * @return
      */
-    public Map<String, Map<String, ServiceInstance>> fetchFullServiceRegistry() {
-        return registry.getRegistry();
+    public Applications fetchFullServiceRegistry() {
+        return new Applications(registry.getRegistry());
     }
 
     /**
