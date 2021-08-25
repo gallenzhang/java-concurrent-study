@@ -2,6 +2,7 @@ package com.gallenzhang.register.client;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicStampedReference;
 
 /**
@@ -44,6 +45,11 @@ public class CachedServiceRegistry {
     private HttpSender httpSender;
 
     /**
+     * 代表了当前的本地缓存的服务注册表的一个版本号
+     */
+    private AtomicLong applicationsVersion = new AtomicLong(0);
+
+    /**
      * 构造函数
      *
      * @param registerClient
@@ -83,7 +89,28 @@ public class CachedServiceRegistry {
         @Override
         public void run() {
             //拉取全量注册表
-            Applications fetchedApplications = httpSender.fetchFullRegistry();
+            //这个操作要走网络，但是不知道为什么，此时就是一直卡住，数据没有返回，卡在这儿，卡了几分钟
+            //此时的这个数据是一个旧的版本，里面仅仅包含了30个服务实例
+            //恰好在增量注册表拉取的reconcileRegistry纠正完成之后，全量注册表的线程突然苏醒了（此时全量注册表已经有40个服务实例）
+            //此时将30个服务实例的旧版本的数据赋值给了本地缓存注册表，这就会导致注册表版本混乱问题
+
+            //一定要在发起网络请求之前，先拿到一个当时的版本号
+            //接着在这里发起网络请求，此时可能会有别的线程来修改这个注册表，更新版本，在这个期间
+            //必须是发起网络请求之后，这个注册表的版本没被别人修改过，此时他才能去修改
+            //如果在这个期间，有人修改过注册表，版本不一样了，此时就直接if不成立，不要把你拉取到的旧版本的注册表给设置进去。
+            fetchFullRegistry();
+        }
+    }
+
+    /**
+     * 拉取全量注册表到本地
+     */
+    private void fetchFullRegistry() {
+        Long expectedVersion = applicationsVersion.get();
+        //接着在这里发起网络请求，此时可能会有别的线程来修改这个注册表，更新版本，在这个期间
+        Applications fetchedApplications = httpSender.fetchFullRegistry();
+        //必须是发起网络请求之后，这个注册表的版本没被别人修改过，此时他才能去修改
+        if (applicationsVersion.compareAndSet(expectedVersion, expectedVersion + 1)) {
             while (true) {
                 Applications expectedApplications = applications.getReference();
                 int expectedStamp = applications.getStamp();
@@ -107,18 +134,21 @@ public class CachedServiceRegistry {
                     Thread.sleep(SERVICE_REGISTRY_FETCH_INTERVAL);
 
                     //拉取回来的是最近3分钟变化的服务实例
+                    //先拉了一个增量注册表，发现跟本地合并之后，条数不对
+                    Long expectedVersion = applicationsVersion.get();
                     DeltaRegistry deltaRegistry = httpSender.fetchDeltaRegistry();
+                    if (applicationsVersion.compareAndSet(expectedVersion, expectedVersion + 1)) {
+                        //一类是注册，一类是删除。
+                        //如果是注册的话，就判断一下这个服务实例是否在这个本地缓存的注册表中。如果不在的话，就放到本地缓存注册表中去
+                        //如果是删除的话，判断一下服务实例存在,就给删除掉
 
-                    //一类是注册，一类是删除。
-                    //如果是注册的话，就判断一下这个服务实例是否在这个本地缓存的注册表中。如果不在的话，就放到本地缓存注册表中去
-                    //如果是删除的话，判断一下服务实例存在,就给删除掉
+                        //这里会大量的修改本地缓存的注册表，所以这里需要加锁
+                        mergeDeltaRegistry(deltaRegistry);
 
-                    //这里会大量的修改本地缓存的注册表，所以这里需要加锁
-                    mergeDeltaRegistry(deltaRegistry);
-
-                    //再检查一下，跟服务端的注册表的服务实例的数量相比，是否是一致的
-                    //封装一下增量注册表的对象，也就是拉取增量注册表的时候，一方面返回那个数据，另外一方面要那个对应的register-server端的服务实例的数量
-                    reconcileRegistry(deltaRegistry);
+                        //再检查一下，跟服务端的注册表的服务实例的数量相比，是否是一致的
+                        //封装一下增量注册表的对象，也就是拉取增量注册表的时候，一方面返回那个数据，另外一方面要那个对应的register-server端的服务实例的数量
+                        reconcileRegistry(deltaRegistry);
+                    }
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -171,8 +201,11 @@ public class CachedServiceRegistry {
      */
     private void reconcileRegistry(DeltaRegistry deltaRegistry) {
         Map<String, Map<String, ServiceInstance>> registry = applications.getReference().getRegistry();
+
+        //获取服务端的实例数量
         Long serverSideTotalCount = deltaRegistry.getServiceInstanceTotalCount();
 
+        //获取客户端的实例数量
         Long clientSideTotalCount = 0L;
         for (Map<String, ServiceInstance> serviceInstanceMap : registry.values()) {
             clientSideTotalCount += serviceInstanceMap.size();
@@ -180,15 +213,8 @@ public class CachedServiceRegistry {
 
         if (!serverSideTotalCount.equals(clientSideTotalCount)) {
             //重新拉取全量注册表进行纠正
-            Applications fetchedApplications = httpSender.fetchFullRegistry();
-            while (true) {
-                Applications expectedApplications = applications.getReference();
-                int expectedStamp = applications.getStamp();
-                if (applications.compareAndSet(expectedApplications, fetchedApplications,
-                        expectedStamp, expectedStamp + 1)) {
-                    break;
-                }
-            }
+            //正常进行全量注册表最新数据的一个赋值，可能是包含了40个服务实例
+            fetchFullRegistry();
         }
     }
 
