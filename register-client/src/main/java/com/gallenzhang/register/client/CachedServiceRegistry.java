@@ -2,7 +2,7 @@ package com.gallenzhang.register.client;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicStampedReference;
 
 /**
  * @description: 服务注册中心的客户端缓存的一个服务注册表
@@ -25,7 +25,7 @@ public class CachedServiceRegistry {
      * 就用AtomicReference的CAS操作来解决，而没有使用加锁的重量级的方式
      * </p>
      */
-    private AtomicReference<Applications> applications = new AtomicReference<>(new Applications());
+    private AtomicStampedReference<Applications> applications = null;
 
 
     /**
@@ -53,6 +53,7 @@ public class CachedServiceRegistry {
         this.fetchDeltaRegistryWorker = new FetchDeltaRegistryWorker();
         this.registerClient = registerClient;
         this.httpSender = httpSender;
+        this.applications = new AtomicStampedReference(new Applications(), 0);
     }
 
     /**
@@ -84,8 +85,10 @@ public class CachedServiceRegistry {
             //拉取全量注册表
             Applications fetchedApplications = httpSender.fetchFullRegistry();
             while (true) {
-                Applications expectedApplications = applications.get();
-                if (applications.compareAndSet(expectedApplications, fetchedApplications)) {
+                Applications expectedApplications = applications.getReference();
+                int expectedStamp = applications.getStamp();
+                if (applications.compareAndSet(expectedApplications, fetchedApplications,
+                        expectedStamp, expectedStamp + 1)) {
                     break;
                 }
             }
@@ -131,7 +134,7 @@ public class CachedServiceRegistry {
      */
     private void mergeDeltaRegistry(DeltaRegistry deltaRegistry) {
         synchronized (applications) {
-            Map<String, Map<String, ServiceInstance>> registry = applications.get().getRegistry();
+            Map<String, Map<String, ServiceInstance>> registry = applications.getReference().getRegistry();
 
             for (RecentlyChangedServiceInstance recentlyChangedItem : deltaRegistry.getRecentlyChangedQueue()) {
                 String serviceName = recentlyChangedItem.serviceInstance.getServiceName();
@@ -167,7 +170,7 @@ public class CachedServiceRegistry {
      * @param deltaRegistry
      */
     private void reconcileRegistry(DeltaRegistry deltaRegistry) {
-        Map<String, Map<String, ServiceInstance>> registry = applications.get().getRegistry();
+        Map<String, Map<String, ServiceInstance>> registry = applications.getReference().getRegistry();
         Long serverSideTotalCount = deltaRegistry.getServiceInstanceTotalCount();
 
         Long clientSideTotalCount = 0L;
@@ -179,8 +182,10 @@ public class CachedServiceRegistry {
             //重新拉取全量注册表进行纠正
             Applications fetchedApplications = httpSender.fetchFullRegistry();
             while (true) {
-                Applications expectedApplications = applications.get();
-                if (applications.compareAndSet(expectedApplications, fetchedApplications)) {
+                Applications expectedApplications = applications.getReference();
+                int expectedStamp = applications.getStamp();
+                if (applications.compareAndSet(expectedApplications, fetchedApplications,
+                        expectedStamp, expectedStamp + 1)) {
                     break;
                 }
             }
@@ -193,7 +198,7 @@ public class CachedServiceRegistry {
      * @return
      */
     public Map<String, Map<String, ServiceInstance>> getRegistry() {
-        return applications.get().getRegistry();
+        return applications.getReference().getRegistry();
     }
 
     /**
