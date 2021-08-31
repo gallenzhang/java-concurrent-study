@@ -31,16 +31,14 @@ public class FSDirectory {
 
         synchronized (dirTree) {
             String[] paths = path.split("/");
-            INodeDirectory parent = null;
+            INodeDirectory parent = dirTree;
 
             for (String splitPath : paths) {
                 if (splitPath.trim().equals("")) {
                     continue;
                 }
 
-                INodeDirectory dir = findDirectory(
-                        parent == null ? dirTree : parent,
-                        splitPath);
+                INodeDirectory dir = findDirectory(parent, splitPath);
 
                 if (dir != null) {
                     parent = dir;
