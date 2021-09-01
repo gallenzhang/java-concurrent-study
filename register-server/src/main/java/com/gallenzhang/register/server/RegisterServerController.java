@@ -65,7 +65,10 @@ public class RegisterServerController {
             //对服务实例进行续约
             ServiceInstance serviceInstance = registry.getServiceInstance(
                     heartbeatRequest.getServiceName(), heartbeatRequest.getServiceInstanceId());
-            serviceInstance.renew();
+
+            if (serviceInstance != null) {
+                serviceInstance.renew();
+            }
 
             //记录下每分钟的心跳的次数
             HeartbeatCounter heartbeatCounter = HeartbeatCounter.getInstance();
@@ -88,7 +91,13 @@ public class RegisterServerController {
      * @return
      */
     public Applications fetchFullServiceRegistry() {
-        return new Applications(registry.getRegistry());
+        try {
+            registry.readLock();
+            return new Applications(registry.getRegistry());
+        } finally {
+            registry.readUnlock();
+        }
+
     }
 
     /**
@@ -97,7 +106,12 @@ public class RegisterServerController {
      * @return
      */
     public DeltaRegistry fetchDeltaServiceRegistry() {
-        return registry.getDeltaRegistry();
+        try {
+            registry.readLock();
+            return registry.getDeltaRegistry();
+        } finally {
+            registry.readUnlock();
+        }
     }
 
     /**

@@ -52,7 +52,9 @@ public class ServiceInstance {
      * 服务续约
      */
     public void renew() {
-        this.lease.renew();
+        if (lease != null) {
+            this.lease.renew();
+        }
     }
 
     /**

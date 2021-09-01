@@ -115,7 +115,7 @@ public class FSEditlog {
             isSyncRunning = true;
         }
 
-        //开始同步内存缓冲的数据到磁盘文件里去，这个过程其实是比较慢，基本上肯定是毫秒级了，弄不好要几十毫秒
+        //开始同步内存缓冲的数据到磁盘文件里去，这个过程其实是比较慢，基本上肯定是毫秒级了，弄不好要几十毫秒。耗时的磁盘操作没有加锁。
         editLogBuffer.flush();
 
         synchronized (this) {
