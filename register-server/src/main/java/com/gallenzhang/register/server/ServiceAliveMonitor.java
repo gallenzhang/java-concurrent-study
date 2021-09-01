@@ -96,6 +96,11 @@ public class ServiceAliveMonitor {
                         }
                     }
 
+                    //过期掉注册表缓存
+                    if (removingServiceInstances.size() != 0) {
+                        ServiceRegistryCache.getInstance().invalidate();
+                    }
+
 
                     Thread.sleep(CHECK_ALIVE_INTERVAL);
 
