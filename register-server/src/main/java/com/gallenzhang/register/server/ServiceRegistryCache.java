@@ -62,7 +62,7 @@ public class ServiceRegistryCache {
     private CacheMapSyncDaemon cacheMapSyncDaemon;
 
     /**
-     * 内部锁
+     * 对ReadWriteMap的内部锁
      */
     private Object lock = new Object();
 
@@ -163,26 +163,21 @@ public class ServiceRegistryCache {
         public void run() {
             while (true) {
                 try {
-                    synchronized (lock) {
-                        if (readWriteMap.get(FULL_SERVICE_REGISTRY) == null) {
-                            try {
-                                writeLock.lock();
-                                readOnlyMap.put(FULL_SERVICE_REGISTRY, null);
-                            } finally {
-                                writeLock.unlock();
-                            }
-                        }
+                    try {
+                        writeLock.lock();
 
-                        if (readWriteMap.get(DELTA_SERVICE_REGISTRY) == null) {
-                            try {
-                                writeLock.lock();
+                        synchronized (lock) {
+                            if (readWriteMap.get(FULL_SERVICE_REGISTRY) == null) {
+                                readOnlyMap.put(FULL_SERVICE_REGISTRY, null);
+                            }
+
+                            if (readWriteMap.get(DELTA_SERVICE_REGISTRY) == null) {
                                 readOnlyMap.put(DELTA_SERVICE_REGISTRY, null);
-                            } finally {
-                                writeLock.unlock();
                             }
                         }
+                    } finally {
+                        writeLock.unlock();
                     }
-                    
                     Thread.sleep(CACHE_MAP_SYNC_INTERVAL);
                 } catch (Exception e) {
                     e.printStackTrace();
