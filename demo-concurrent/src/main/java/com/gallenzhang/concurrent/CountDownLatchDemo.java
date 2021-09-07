@@ -47,6 +47,7 @@ public class CountDownLatchDemo {
 
         System.out.println("main线程准备执行CountDownLatch的await操作，将会同步阻塞等待......");
 
+        //如果有多个线程都阻塞在await()方法这里，此时如果countDown之后，state == 0，此时会直接触发AQS等待队列里的所有线程全部唤醒，往下走。
         latch.await();
 
         //Thread.join()，在有这个CountDownLatch API之前，同步阻塞某个线程执行完毕，Thread.j其实采用的都是oin()
