@@ -16,14 +16,14 @@ public class DataNode {
     /**
      * 负责跟一组NameNode通信的组件
      */
-    private NameNodeGroupOfferService offerService;
+    private NameNodeOfferService offerService;
 
     /**
      * 初始化DataNode
      */
     private void initialize() {
         this.shouldRun = true;
-        this.offerService = new NameNodeGroupOfferService();
+        this.offerService = new NameNodeOfferService();
         this.offerService.start();
     }
 
