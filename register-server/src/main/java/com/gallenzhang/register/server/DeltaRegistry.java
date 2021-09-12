@@ -1,6 +1,6 @@
 package com.gallenzhang.register.server;
 
-import java.util.LinkedList;
+import java.util.Queue;
 
 /**
  * @description: 增量注册表
@@ -11,19 +11,19 @@ import java.util.LinkedList;
  */
 public class DeltaRegistry {
 
-    private LinkedList<ServiceRegistry.RecentlyChangedServiceInstance> recentlyChangedQueue;
+    private Queue<ServiceRegistry.RecentlyChangedServiceInstance> recentlyChangedQueue;
     private Long serviceInstanceTotalCount;
 
-    public DeltaRegistry(LinkedList<ServiceRegistry.RecentlyChangedServiceInstance> recentlyChangedQueue, Long serviceInstanceTotalCount) {
+    public DeltaRegistry(Queue<ServiceRegistry.RecentlyChangedServiceInstance> recentlyChangedQueue, Long serviceInstanceTotalCount) {
         this.recentlyChangedQueue = recentlyChangedQueue;
         this.serviceInstanceTotalCount = serviceInstanceTotalCount;
     }
 
-    public LinkedList<ServiceRegistry.RecentlyChangedServiceInstance> getRecentlyChangedQueue() {
+    public Queue<ServiceRegistry.RecentlyChangedServiceInstance> getRecentlyChangedQueue() {
         return recentlyChangedQueue;
     }
 
-    public void setRecentlyChangedQueue(LinkedList<ServiceRegistry.RecentlyChangedServiceInstance> recentlyChangedQueue) {
+    public void setRecentlyChangedQueue(Queue<ServiceRegistry.RecentlyChangedServiceInstance> recentlyChangedQueue) {
         this.recentlyChangedQueue = recentlyChangedQueue;
     }
 
