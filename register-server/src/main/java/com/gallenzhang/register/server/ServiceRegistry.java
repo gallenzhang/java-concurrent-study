@@ -1,8 +1,8 @@
 package com.gallenzhang.register.server;
 
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -21,6 +21,17 @@ public class ServiceRegistry {
      * 注册表是一个单例
      */
     private static ServiceRegistry instance = new ServiceRegistry();
+
+
+    /**
+     * 核心的内存数据结构：注册表
+     * <p>
+     * Map：key是服务名称，value是这个服务的所有的服务实例
+     * <p>
+     * Map<String,ServiceInstance>: key是服务实例id，value是服务实例的信息
+     */
+    private Map<String, Map<String, ServiceInstance>> registry =
+            new ConcurrentHashMap<>();
 
     /**
      * 最近变更的服务实例的队列
@@ -72,15 +83,6 @@ public class ServiceRegistry {
         this.writeLock.unlock();
     }
 
-    /**
-     * 核心的内存数据结构：注册表
-     * <p>
-     * Map：key是服务名称，value是这个服务的所有的服务实例
-     * <p>
-     * Map<String,ServiceInstance>: key是服务实例id，value是服务实例的信息
-     */
-    private Map<String, Map<String, ServiceInstance>> registry =
-            new HashMap<String, Map<String, ServiceInstance>>();
 
     /**
      * 服务注册
@@ -106,7 +108,7 @@ public class ServiceRegistry {
             //将服务实例放入注册表中
             Map<String, ServiceInstance> serviceInstanceMap = registry.get(serviceInstance.getServiceName());
             if (serviceInstanceMap == null) {
-                serviceInstanceMap = new HashMap<>();
+                serviceInstanceMap = new ConcurrentHashMap<>();
                 registry.put(serviceInstance.getServiceName(), serviceInstanceMap);
             }
             serviceInstanceMap.put(serviceInstance.getServiceInstanceId(), serviceInstance);
