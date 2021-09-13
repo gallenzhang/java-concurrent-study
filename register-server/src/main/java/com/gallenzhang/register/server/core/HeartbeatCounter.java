@@ -1,6 +1,5 @@
-package com.gallenzhang.register.server;
+package com.gallenzhang.register.server.core;
 
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 
 /**

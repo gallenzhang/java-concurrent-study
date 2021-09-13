@@ -1,9 +1,9 @@
-package com.gallenzhang.register.server;
+package com.gallenzhang.register.server.core;
 
 
 /**
  * @description: 自我保护机制
- * @className: com.gallenzhang.register.server.SelfProtectionPolicy
+ * @className: com.gallenzhang.register.server.core.SelfProtectionPolicy
  * @author: gallenzhang
  * @createDate: 2021/8/19
  */

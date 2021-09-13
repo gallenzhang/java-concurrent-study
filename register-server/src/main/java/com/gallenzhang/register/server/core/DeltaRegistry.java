@@ -1,10 +1,10 @@
-package com.gallenzhang.register.server;
+package com.gallenzhang.register.server.core;
 
 import java.util.Queue;
 
 /**
  * @description: 增量注册表
- * @className: com.gallenzhang.register.server.DeltaRegistry
+ * @className: com.gallenzhang.register.server.core.DeltaRegistry
  * @copyRight: www.shopee.com by SZDC-BankingGroup
  * @author: xiaoqiang.zhang
  * @createDate: 2021/8/24

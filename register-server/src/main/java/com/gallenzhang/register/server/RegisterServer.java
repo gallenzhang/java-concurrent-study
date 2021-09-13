@@ -1,5 +1,10 @@
 package com.gallenzhang.register.server;
 
+import com.gallenzhang.register.server.core.ServiceAliveMonitor;
+import com.gallenzhang.register.server.web.HeartbeatRequest;
+import com.gallenzhang.register.server.web.RegisterRequest;
+import com.gallenzhang.register.server.web.RegisterServerController;
+
 import java.util.UUID;
 
 /**

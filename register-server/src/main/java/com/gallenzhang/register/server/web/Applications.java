@@ -1,11 +1,13 @@
-package com.gallenzhang.register.server;
+package com.gallenzhang.register.server.web;
+
+import com.gallenzhang.register.server.core.ServiceInstance;
 
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @description: 完整的服务实例的信息
- * @className: com.gallenzhang.register.server.Applications
+ * @className: com.gallenzhang.register.server.web.Applications
  * @copyRight: www.shopee.com by SZDC-BankingGroup
  * @author: xiaoqiang.zhang
  * @createDate: 2021/8/24

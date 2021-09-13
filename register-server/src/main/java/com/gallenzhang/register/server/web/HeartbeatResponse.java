@@ -1,18 +1,18 @@
-package com.gallenzhang.register.server;
+package com.gallenzhang.register.server.web;
 
 /**
- * @description: 注册响应
- * @className: com.gallenzhang.register.server.RegisterResponse
+ * @description: 心跳响应
+ * @className: com.gallenzhang.register.server.web.HeartbeatResponse
  * @author: gallenzhang
  * @createDate: 2021/8/19
  */
-public class RegisterResponse {
+public class HeartbeatResponse {
 
     public static final String SUCCESS = "success";
     public static final String FAILURE = "failure";
 
     /**
-     * 注册响应状态：SUCCESS、FAILURE
+     * 心跳响应状态：SUCCESS、FAILURE
      */
     private String status;
 

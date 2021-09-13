@@ -1,22 +1,12 @@
-package com.gallenzhang.register.server;
+package com.gallenzhang.register.server.web;
 
 /**
  * @description: 注册请求
- * @className: com.gallenzhang.register.server.RegisterRequest
+ * @className: com.gallenzhang.register.server.web.RegisterRequest
  * @author: gallenzhang
  * @createDate: 2021/8/19
  */
-public class RegisterRequest {
-
-    /**
-     * 服务名称
-     */
-    private String serviceName;
-
-    /**
-     * 服务实例ID
-     */
-    private String serviceInstanceId;
+public class RegisterRequest extends AbstractRequest {
 
     /**
      * 服务所在机器的主机名
@@ -32,22 +22,6 @@ public class RegisterRequest {
      * 服务监听着哪个端口号
      */
     private Integer port;
-
-    public String getServiceName() {
-        return serviceName;
-    }
-
-    public void setServiceName(String serviceName) {
-        this.serviceName = serviceName;
-    }
-
-    public String getServiceInstanceId() {
-        return serviceInstanceId;
-    }
-
-    public void setServiceInstanceId(String serviceInstanceId) {
-        this.serviceInstanceId = serviceInstanceId;
-    }
 
     public String getHostName() {
         return hostName;

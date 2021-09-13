@@ -1,11 +1,14 @@
-package com.gallenzhang.register.server;
+package com.gallenzhang.register.server.web;
 
+
+import com.gallenzhang.register.server.cluster.PeersReplicator;
+import com.gallenzhang.register.server.core.*;
 
 /**
  * @description: 这个controller是负责接收register-client发送过来的请求的
  * 在springcloud eureka中用的组件是jersey
  * jersey在国外很常用的一个restful框架，可以接受http请求
- * @className: com.gallenzhang.register.server.RegisterServerController
+ * @className: com.gallenzhang.register.server.web.RegisterServerController
  * @author: gallenzhang
  * @createDate: 2021/8/19
  */
@@ -20,6 +23,11 @@ public class RegisterServerController {
      * 服务注册表的缓存
      */
     private ServiceRegistryCache registryCache = ServiceRegistryCache.getInstance();
+
+    /**
+     * 集群同步组件
+     */
+    private PeersReplicator peersReplicator = PeersReplicator.getInstance();
 
     /**
      * 服务注册
@@ -52,6 +60,9 @@ public class RegisterServerController {
 
             //过期掉注册表缓存
             registryCache.invalidate();
+
+            //进行集群同步
+            peersReplicator.replicateRegister(registerRequest);
 
             registerResponse.setStatus(RegisterResponse.SUCCESS);
         } catch (Exception e) {
@@ -86,6 +97,9 @@ public class RegisterServerController {
 
             heartbeatResponse.setStatus(HeartbeatResponse.SUCCESS);
 
+            //进行集群同步
+            peersReplicator.replicateHeartbeat(heartbeatRequest);
+
         } catch (Exception e) {
             e.printStackTrace();
             heartbeatResponse.setStatus(HeartbeatResponse.FAILURE);
@@ -117,12 +131,11 @@ public class RegisterServerController {
     /**
      * 服务下线
      *
-     * @param serviceName
-     * @param serviceInstanceId
+     * @param cancelRequest
      */
-    public void cancel(String serviceName, String serviceInstanceId) {
+    public void cancel(CancelRequest cancelRequest) {
         //从服务注册表中摘除实例
-        registry.remove(serviceName, serviceInstanceId);
+        registry.remove(cancelRequest.getServiceName(), cancelRequest.getServiceInstanceId());
 
         //更新自我保护机制的阈值
         synchronized (SelfProtectionPolicy.class) {
@@ -135,5 +148,8 @@ public class RegisterServerController {
 
         //过期掉注册表缓存
         registryCache.invalidate();
+
+        //进行集群同步
+        peersReplicator.replicateCancel(cancelRequest);
     }
 }

@@ -1,4 +1,4 @@
-package com.gallenzhang.register.server;
+package com.gallenzhang.register.server.core;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,7 +6,7 @@ import java.util.Map;
 
 /**
  * @description: 微服务存活状态监控组件
- * @className: com.gallenzhang.register.server.ServiceAliveMonitor
+ * @className: com.gallenzhang.register.server.core.ServiceAliveMonitor
  * @author: gallenzhang
  * @createDate: 2021/8/19
  */

@@ -1,4 +1,4 @@
-package com.gallenzhang.register.server;
+package com.gallenzhang.register.server.core;
 
 import java.util.Map;
 import java.util.Queue;
@@ -8,7 +8,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @description: 服务注册表
- * @className: com.gallenzhang.register.server.ServiceRegistry
+ * @className: com.gallenzhang.register.server.core.ServiceRegistry
  * @author: gallenzhang
  * @createDate: 2021/8/19
  */
@@ -257,7 +257,7 @@ public class ServiceRegistry {
 
                         RecentlyChangedServiceInstance recentlyChangedServiceInstance;
                         Long currentTimestamp = System.currentTimeMillis();
-                        
+
                         while ((recentlyChangedServiceInstance = recentlyChangedQueue.peek()) != null) {
                             //判断如果一个服务实例变更信息已经在队列里存在超过3分钟了，就从队列中移除
                             if (currentTimestamp - recentlyChangedServiceInstance.changedTimestamp >

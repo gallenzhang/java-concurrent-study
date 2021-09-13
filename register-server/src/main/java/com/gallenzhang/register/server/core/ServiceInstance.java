@@ -1,9 +1,9 @@
-package com.gallenzhang.register.server;
+package com.gallenzhang.register.server.core;
 
 
 /**
  * @description: 代表了一个服务实例，里面包含了一个服务实例的所有信息(服务名称、ip地址、hostname、端口号、服务实例id、契约信息Lease)
- * @className: com.gallenzhang.register.server.ServiceInstance
+ * @className: com.gallenzhang.register.server.core.ServiceInstance
  * @author: gallenzhang
  * @createDate: 2021/8/19
  */

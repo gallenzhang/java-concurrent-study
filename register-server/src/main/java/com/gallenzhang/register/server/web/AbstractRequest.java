@@ -1,22 +1,22 @@
-package com.gallenzhang.register.server;
+package com.gallenzhang.register.server.web;
 
 /**
- * @description: 心跳请求
- * @className: com.gallenzhang.register.server.HeartbeatRequest
+ * @description: 请求接口
+ * @className: com.gallenzhang.register.server.web.AbstractRequest
  * @author: gallenzhang
- * @createDate: 2021/8/19
+ * @createDate: 2021/9/13
  */
-public class HeartbeatRequest {
+public abstract class AbstractRequest {
 
     /**
      * 服务名称
      */
-    private String serviceName;
+    protected String serviceName;
 
     /**
-     * 服务实例ID
+     * 服务实例id
      */
-    private String serviceInstanceId;
+    protected String serviceInstanceId;
 
     public String getServiceName() {
         return serviceName;
@@ -36,7 +36,7 @@ public class HeartbeatRequest {
 
     @Override
     public String toString() {
-        return "HeartbeatRequest{" +
+        return "AbstractRequest{" +
                 "serviceName='" + serviceName + '\'' +
                 ", serviceInstanceId='" + serviceInstanceId + '\'' +
                 '}';
