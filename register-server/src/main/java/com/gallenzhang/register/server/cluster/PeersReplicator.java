@@ -32,7 +32,12 @@ public class PeersReplicator {
     /**
      * 第二层队列：有界队列，用于batch生成
      */
-    private LinkedBlockingQueue<AbstractRequest> batchQueue = new LinkedBlockingQueue<>();
+    private LinkedBlockingQueue<AbstractRequest> batchQueue = new LinkedBlockingQueue<>(1000000);
+
+    /**
+     * 第三层队列：有界队列，用于batch的同步发送
+     */
+    private LinkedBlockingQueue<PeersReplicateBatch> replicateQueue = new LinkedBlockingQueue<>(10000);
 
 
     private PeersReplicator() {
@@ -40,6 +45,11 @@ public class PeersReplicator {
         AcceptorBatchThread acceptorBatchThread = new AcceptorBatchThread();
         acceptorBatchThread.setDaemon(true);
         acceptorBatchThread.start();
+
+        //启动同步发送batch的线程
+        PeersReplicateThread peersReplicateThread = new PeersReplicateThread();
+        peersReplicateThread.setDaemon(true);
+        peersReplicateThread.start();
     }
 
     public static PeersReplicator getInstance() {
@@ -86,13 +96,13 @@ public class PeersReplicator {
                         //此时如果第二层队列里面有数据的，生成一个batch
                         if (batchQueue.size() > 0) {
                             PeersReplicateBatch batch = createBatch();
-
+                            replicateQueue.offer(batch);
                         }
 
                         this.latestBatchGeneration = System.currentTimeMillis();
                     }
                 } catch (Exception e) {
-
+                    e.printStackTrace();
                 }
             }
         }
@@ -112,6 +122,28 @@ public class PeersReplicator {
 
             batchQueue.clear();
             return batch;
+        }
+    }
+
+    /**
+     * 集群同步线程
+     */
+    class PeersReplicateThread extends Thread {
+        @Override
+        public void run() {
+            while (true) {
+                try {
+                    PeersReplicateBatch batch = replicateQueue.take();
+                    if (batch != null) {
+                        //遍历所有的其他的register-server地址
+                        //给每个地址的register-server都发送一个http请求同步batch
+                        System.out.println("给所有其他的register-server发送请求，同步batch过去......");
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
