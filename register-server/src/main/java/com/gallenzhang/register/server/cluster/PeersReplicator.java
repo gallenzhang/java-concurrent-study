@@ -5,7 +5,9 @@ import com.gallenzhang.register.server.web.CancelRequest;
 import com.gallenzhang.register.server.web.HeartbeatRequest;
 import com.gallenzhang.register.server.web.RegisterRequest;
 
+import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * @description: 集群同步组件
@@ -15,6 +17,11 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  */
 public class PeersReplicator {
 
+    /**
+     * 集群同步生成batch的间隔时间：500ms
+     */
+    private static final long PEERS_REPLICATE_BATCH_INTERVAL = 500;
+
     private static final PeersReplicator instance = new PeersReplicator();
 
     /**
@@ -22,8 +29,17 @@ public class PeersReplicator {
      */
     private ConcurrentLinkedQueue<AbstractRequest> acceptorQueue = new ConcurrentLinkedQueue();
 
-    private PeersReplicator() {
+    /**
+     * 第二层队列：有界队列，用于batch生成
+     */
+    private LinkedBlockingQueue<AbstractRequest> batchQueue = new LinkedBlockingQueue<>();
 
+
+    private PeersReplicator() {
+        //启动接收请求和打包batch的线程
+        AcceptorBatchThread acceptorBatchThread = new AcceptorBatchThread();
+        acceptorBatchThread.setDaemon(true);
+        acceptorBatchThread.start();
     }
 
     public static PeersReplicator getInstance() {
@@ -49,6 +65,54 @@ public class PeersReplicator {
      */
     public void replicateHeartbeat(HeartbeatRequest request) {
         acceptorQueue.offer(request);
+    }
+
+    class AcceptorBatchThread extends Thread {
+        long latestBatchGeneration = System.currentTimeMillis();
+
+        @Override
+        public void run() {
+            while (true) {
+                try {
+                    //从第一层队列获取请求，并且放入第二层队列中
+                    AbstractRequest request = acceptorQueue.poll();
+                    if (request != null) {
+                        batchQueue.put(request);
+                    }
+
+                    //采用一定的策略来进行打包，每隔500ms生成一个batch
+                    long now = System.currentTimeMillis();
+                    if ((now - latestBatchGeneration) >= PEERS_REPLICATE_BATCH_INTERVAL) {
+                        //此时如果第二层队列里面有数据的，生成一个batch
+                        if (batchQueue.size() > 0) {
+                            PeersReplicateBatch batch = createBatch();
+
+                        }
+
+                        this.latestBatchGeneration = System.currentTimeMillis();
+                    }
+                } catch (Exception e) {
+
+                }
+            }
+        }
+
+        /**
+         * 创建一个batch
+         *
+         * @return
+         */
+        private PeersReplicateBatch createBatch() {
+            PeersReplicateBatch batch = new PeersReplicateBatch();
+            Iterator<AbstractRequest> iterator = batchQueue.iterator();
+            while (iterator.hasNext()) {
+                AbstractRequest request = iterator.next();
+                batch.add(request);
+            }
+
+            batchQueue.clear();
+            return batch;
+        }
     }
 
 }
