@@ -60,6 +60,7 @@ public class PeersReplicator {
      * 同步服务注册请求
      */
     public void replicateRegister(RegisterRequest request) {
+        request.setType(AbstractRequest.REGISTER_REQUEST);
         acceptorQueue.offer(request);
     }
 
@@ -67,6 +68,7 @@ public class PeersReplicator {
      * 同步服务下线请求
      */
     public void replicateCancel(CancelRequest request) {
+        request.setType(AbstractRequest.CANCEL_REQUEST);
         acceptorQueue.offer(request);
     }
 
@@ -74,6 +76,7 @@ public class PeersReplicator {
      * 服务同步心跳请求
      */
     public void replicateHeartbeat(HeartbeatRequest request) {
+        request.setType(AbstractRequest.HEARTBEAT_REQUEST);
         acceptorQueue.offer(request);
     }
 
